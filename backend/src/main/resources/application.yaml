@@ -13,7 +13,18 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.MySQL5InnoDBDialect
 
-
+ #Mail Configuration
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: example@gmail.com
+    password: exmaplepassword
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 #jwt:
 #  auth:
 #    app: Spring-Security-App
