@@ -3,6 +3,7 @@ package com.web.student_register.Service;
 import com.web.student_register.Dto.UserDto;
 import com.web.student_register.config.JWTTokenHelper;
 import com.web.student_register.entity.*;
+import com.web.student_register.exception.InvalidTokenException;
 import com.web.student_register.repository.RoleRePo;
 import com.web.student_register.repository.UserRepo;
 import com.web.student_register.response.LogInResponse;
@@ -27,6 +28,13 @@ public class CustomUserService implements UserDetailsService {
     private JWTTokenHelper jwtTokenHelper;
     private PasswordEncoder passwordEncoder;
     private RoleRePo roleRepo;
+    private static final int MAX_REQUEST = 3;
+    // TIME_FRAME is 1 hour
+    private static final long TIME_FRAME = 60 * 60 * 1000;
+
+    @Autowired
+    private EmailService emailService;
+
 
 
     @Lazy
@@ -46,7 +54,7 @@ public class CustomUserService implements UserDetailsService {
         User user = userRepo.getByUserName(username);
 
         if(user == null){
-            throw new UsernameNotFoundException(username + " does not exist!");
+            throw new UsernameNotFoundException("userName is " + username + " does not exist!");
         }
         return new UserPrincipal(user);
     }
@@ -71,7 +79,7 @@ public class CustomUserService implements UserDetailsService {
         LogInResponse response;
         try{
             response = new LogInResponse();
-            token = jwtTokenHelper.generateToken(userDetails.getUsername());
+            token = jwtTokenHelper.generateToken(userDetails.getUsername(), 0);
             response.setToken(token);
 
         }catch(Exception e){
@@ -81,6 +89,64 @@ public class CustomUserService implements UserDetailsService {
         }
 
         return response;
+    }
+
+    public String forgetPassword(String email, String token){
+        String newToken = null;
+        try {
+
+            if(token != null){
+                String userName = jwtTokenHelper.getUserNameFromToken(token);
+                UserDetails userDetails = loadUserByUsername(userName);
+
+                //Validate the token
+                if(!jwtTokenHelper.validateToken(token, userDetails)){
+                    return "Token expired. Try again";
+                }
+
+                int requestCount = jwtTokenHelper.getRequestCount(token);
+                long timeStamp = jwtTokenHelper.getTimeStamp(token);
+
+                //Check if user exceed the limit
+                if(requestCount > MAX_REQUEST &&  System.currentTimeMillis() - timeStamp < TIME_FRAME){
+                    return "To many password reset Request. Try again Later";
+                }
+
+
+                //increment the request count and create new Token
+                newToken = jwtTokenHelper.generateToken(userName, requestCount + 1);
+
+            }else{
+                //create new token if a user first time request for password reset
+                UserDetails user = loadUserByUsername(email);
+                newToken = jwtTokenHelper.generateToken(user.getUsername(), 1);
+            }
+
+            //Create Url
+            String url = createURL(newToken);
+            //send reset link to the user
+            emailService.sendEmail("indeshc@gmail.com", "Demo URL", "Click the reset password Link " + url);
+        }catch(Exception e){
+            throw new InvalidTokenException("Token is invalid", e);
+        }
+        return newToken;
+    }
+
+    public String createURL(String token){
+        return "https://www.chicagolandtharusociety.org/" + token;
+    }
+
+    public void resetPassword(String token, String newPassword){
+        String userName = jwtTokenHelper.getUserNameFromToken(token);
+        if(userName != null){
+            UserDetails userDetails = loadUserByUsername(userName);
+            if(jwtTokenHelper.validateToken(token, userDetails)){
+                User user = userRepo.getByUserName(userName);
+                user.setPassword(passwordEncoder.encode(newPassword));
+                userRepo.save(user);
+            }
+        }
+
     }
 
 
