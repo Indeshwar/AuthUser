@@ -22,6 +22,8 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 import java.util.Date;
+import java.util.HashMap;
+
 @Service
 @Configuration
 public class JWTTokenHelper {
@@ -68,9 +70,14 @@ public class JWTTokenHelper {
         }
     }
 
-    public String generateToken(String userName) throws InvalidKeyException, NoSuchAlgorithmException {
+    public String generateToken(String userName, int requestCount) throws InvalidKeyException, NoSuchAlgorithmException {
+        HashMap<String, Object> claims = new HashMap<>();
+        claims.put("requestCount", requestCount);
+        claims.put("timeStamp", System.currentTimeMillis());
+
         String token = Jwts.builder()
                 .setIssuer(appName)
+                .setClaims(claims)
                 .setSubject(userName)
                 .setIssuedAt(new Date())
                 .setExpiration(generateExpirationDate())
@@ -98,27 +105,49 @@ public class JWTTokenHelper {
     }
 
     public Claims getAllClaimFromToken(String token){
-        Claims claims;
+        Claims claims = null;
         try{
             claims = Jwts.parser().setSigningKey(publicKey).parseClaimsJws(token).getBody();
         }catch(Exception e){
-            claims = null;
+            e.printStackTrace();
         }
 
         return claims;
     }
 
     public String getUserNameFromToken(String token){
-        String userName;
+        String userName = null;
         try{
             final Claims claims = getAllClaimFromToken(token);
             userName = claims.getSubject();
 
         }catch(Exception e){
-
-            userName = null;
+            e.printStackTrace();
         }
         return userName;
+    }
+
+    public int getRequestCount(String token){
+        int requestCount = 0;
+        try{
+            final Claims claims = getAllClaimFromToken(token);
+            requestCount = (int) claims.get("requestCount");
+            System.out.println("Request count is " + requestCount);
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+        return requestCount;
+    }
+
+    public long getTimeStamp(String token){
+        long timeStamp = 0;
+        try{
+            Claims claims = getAllClaimFromToken(token);
+            timeStamp = (long)claims.get("timeStamp");
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+        return timeStamp;
     }
 
     public boolean validateToken(String token, UserDetails userDetails){
@@ -135,12 +164,12 @@ public class JWTTokenHelper {
     }
 
     private Date getExpireDateFromToken(String token) {
-        Date expiryDate;
+        Date expiryDate = null;
         try{
             final Claims claims = getAllClaimFromToken(token);
             expiryDate = claims.getExpiration();
         }catch(Exception e){
-            expiryDate = null;
+            e.printStackTrace();
         }
         return expiryDate;
     }
