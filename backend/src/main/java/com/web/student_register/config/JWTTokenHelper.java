@@ -116,7 +116,7 @@ public class JWTTokenHelper {
     }
 
     public String getUserNameFromToken(String token){
-        String userName = null;
+        String userName = "";
         try{
             final Claims claims = getAllClaimFromToken(token);
             userName = claims.getSubject();
