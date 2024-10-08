@@ -21,6 +21,7 @@ public class RoleRepoTest {
 
     @Test
     public void createTestRole(){
+        System.out.print("This is create test class");
         Role user = new Role("USER");
         Role admin = new Role("ADMIN");
         Role guest = new Role("GUEST");
