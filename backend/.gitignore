@@ -1,2 +1,4 @@
 .idea/.gitignore
+src/main/resources/application.yaml
+
 

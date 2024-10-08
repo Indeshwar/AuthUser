@@ -28,25 +28,6 @@ spring:
           starttls:
             enable: true
 
-#  #Mail Service Configuration
-#  mail:
-#    host: smtp.gmail.com
-#    port: 587
-#    username: indechy@gmail.com
-#    password: Bhawanipur4
-#    properties:
-#            mail:
-#              smtp:
-#                auth: true
-#                starttls:
-#                    enable: true
-
-#jwt:
-#  auth:
-#    app: Spring-Security-App
-#    secret_key: testkey#secret@12334
-#    expires_in: 3600
-
 #Jwt Security Configuration
 jwt:
   auth:

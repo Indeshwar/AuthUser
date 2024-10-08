@@ -35,10 +35,6 @@ public class CustomUserService implements UserDetailsService {
     @Autowired
     private EmailService emailService;
 
-
-
-
-
     @Lazy
     @Autowired
     public CustomUserService(UserRepo userRepo, AuthenticationManager authenticationManager, JWTTokenHelper jwtTokenHelper, PasswordEncoder passwordEncoder, RoleRePo roleRepo) {
